@@ -4,6 +4,4 @@
 window.F3_CONFIG = {
   supabaseUrl: "https://mhzlpdoqpdcgoktwaubf.supabase.co",
   supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oemxwZG9xcGRjZ29rdHdhdWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjE0OTcsImV4cCI6MjEwNjQzNzQ5N30.IEW4ZD8tf77CHlpVZNTgqTrrwLKgKovPwmCVDnXG7vQ",
-  region: "Indy South",          // board label and grouping; men in another region can use a different value
-  timezone: "America/Indiana/Indianapolis"
 };
