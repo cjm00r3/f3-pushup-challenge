@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>F3 Pushup Challenge</title>
+<meta name="description" content="Forged Through Discipline. Daily pushup tracker for the F3 10,000 Pushup Challenge.">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="F3 Pushups">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0c; --bg2:#121214; --panel:#17171a; --panel2:#1f1f23;
+    --line:#2b2b30; --red:#e3202b; --red2:#b3141d; --white:#f2f2f2;
+    --muted:#9a9a9f; --dim:#5d5d63; --ok:#4caf50;
+    --head:'Anton', Impact, 'Arial Narrow Bold', sans-serif;
+    --body:'Oswald', 'Arial Narrow', sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--body);min-height:100%}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, #3a1013 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 110%, #1a1a1d 0%, transparent 50%),
+      var(--bg);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+  }
+  /* grit texture */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.14;mix-blend-mode:screen;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:0 16px}
+
+  /* ---------- header ---------- */
+  header{padding:calc(14px + env(safe-area-inset-top)) 0 10px;text-align:center}
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .logo{display:flex;align-items:center;gap:8px;font-family:var(--head);letter-spacing:1px;font-size:14px;color:var(--white)}
+  .logo .ring{width:34px;height:34px;border:3px solid var(--white);border-radius:50%;display:grid;place-items:center;font-size:15px;line-height:1}
+  .logo small{display:block;font-family:var(--body);font-weight:600;font-size:10px;letter-spacing:3px;color:var(--muted)}
+  .tag{font-family:var(--body);font-weight:600;font-size:10px;letter-spacing:3px;color:var(--muted);text-align:right;line-height:1.5}
+  h1{font-family:var(--head);font-weight:400;margin:4px 0 0;line-height:.92;letter-spacing:1px;text-transform:uppercase}
+  h1 .big{display:block;font-size:46px;color:var(--white)}
+  h1 .red{display:block;font-size:54px;color:var(--red);text-shadow:0 2px 0 #5a0a0f}
+  h1 .sub{display:block;font-size:30px;color:var(--white)}
+  .year{display:inline-block;margin-top:8px;font-family:var(--head);font-size:22px;color:var(--red);letter-spacing:3px;padding:0 14px;position:relative}
+  .year::before,.year::after{content:"";position:absolute;top:50%;width:48px;height:3px;background:var(--white)}
+  .year::before{right:100%}.year::after{left:100%}
+  .motto{margin-top:6px;font-weight:700;font-size:12px;letter-spacing:4px;color:var(--white);text-transform:uppercase}
+
+  /* ---------- panels ---------- */
+  .panel{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .panel h2{font-family:var(--head);font-weight:400;font-size:20px;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+  .panel h2::after{content:"";flex:1;height:2px;background:var(--red)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:8px 0 4px}
+  .stat{text-align:center;padding:8px 4px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat .v{font-family:var(--head);font-size:26px;letter-spacing:1px;line-height:1}
+  .stat .l{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+  .stat .icon{font-size:20px;margin-bottom:4px}
+
+  /* ---------- ring ---------- */
+  .ringwrap{display:grid;place-items:center;position:relative;margin:4px 0 8px}
+  .ringwrap svg{width:210px;height:210px;transform:rotate(-90deg)}
+  .ringwrap .track{stroke:#2a2a2e;fill:none;stroke-width:14}
+  .ringwrap .bar{stroke:var(--red);fill:none;stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+  .ringwrap .bar.done{stroke:var(--ok)}
+  .ringtxt{position:absolute;text-align:center}
+  .ringtxt .n{font-family:var(--head);font-size:58px;line-height:1;letter-spacing:1px}
+  .ringtxt .g{font-size:14px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+  .ringtxt .g b{color:var(--white)}
+
+  /* ---------- sets ---------- */
+  .sets{display:flex;flex-direction:column;gap:10px}
+  .set{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .set.done{border-color:#2f5d33;background:linear-gradient(90deg,#19281b,var(--panel2))}
+  .set .num{width:40px;height:40px;border-radius:50%;border:3px solid var(--red);display:grid;place-items:center;font-family:var(--head);font-size:18px;flex:none}
+  .set.done .num{border-color:var(--ok);color:var(--ok)}
+  .set .info{flex:1;min-width:0}
+  .set .info .t{font-family:var(--head);font-size:22px;letter-spacing:1px;line-height:1}
+  .set .info .m{font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:3px}
+  .set .info .m .time{color:var(--white)}
+
+  /* ---------- buttons ---------- */
+  button{font-family:var(--head);letter-spacing:2px;text-transform:uppercase;border:0;cursor:pointer;color:var(--white);background:var(--red);border-radius:10px;padding:12px 16px;font-size:16px;box-shadow:0 4px 0 var(--red2);transition:transform .05s}
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--red2)}
+  button.ghost{background:transparent;border:2px solid var(--line);box-shadow:none;color:var(--white)}
+  button.ghost:active{transform:none;background:var(--panel2)}
+  button.small{padding:9px 12px;font-size:13px}
+  button.full{width:100%;padding:16px;font-size:20px;margin-top:12px}
+  button:disabled{opacity:.4;cursor:default}
+  .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .quick button{padding:12px 4px;font-size:16px}
+  .customrow{display:flex;gap:8px;margin-top:10px}
+  .customrow input{flex:1}
+
+  /* ---------- forms ---------- */
+  label.field{display:block;margin:12px 0}
+  label.field span{display:block;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+  input[type=number],input[type=text],input[type=date],input[type=time],select{
+    width:100%;background:#0e0e10;border:1px solid var(--line);color:var(--white);border-radius:10px;padding:12px;font-family:var(--body);font-size:18px;outline:none
+  }
+  input:focus,select:focus{border-color:var(--red)}
+  input[type=time]{color-scheme:dark}
+  input[type=date]{color-scheme:dark}
+  .seg{display:grid;gap:6px;grid-auto-flow:column;grid-auto-columns:1fr}
+  .seg button{background:#0e0e10;border:2px solid var(--line);box-shadow:none;padding:12px 6px;font-size:15px;color:var(--muted)}
+  .seg button.on{border-color:var(--red);color:var(--white);background:#2a1113}
+  .seg button:active{transform:none}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hint{font-size:13px;color:var(--muted);line-height:1.45;margin:8px 0 0}
+  .switch{position:relative;width:54px;height:30px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .switch i{position:absolute;inset:0;background:#2a2a2e;border-radius:30px;transition:.2s}
+  .switch i::before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .switch input:checked + i{background:var(--red)}
+  .switch input:checked + i::before{transform:translateX(24px)}
+  .timegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;border:1px solid var(--line);color:var(--muted)}
+  .pill.ok{border-color:#2f5d33;color:#7bd184}
+  .pill.warn{border-color:#5a3a0a;color:#f0b24a}
+  .pill.bad{border-color:#5a1a1d;color:#f06a70}
+
+  /* ---------- progress ---------- */
+  .bigbar{height:22px;background:#0e0e10;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0}
+  .bigbar i{display:block;height:100%;background:linear-gradient(90deg,var(--red2),var(--red));width:0;transition:width .5s}
+  .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+  .heat .d{aspect-ratio:1;border-radius:4px;background:#1c1c20;border:1px solid #26262a;display:grid;place-items:center;font-size:9px;color:var(--dim);position:relative}
+  .heat .d.l1{background:#3a1416}.heat .d.l2{background:#6e1a1f}.heat .d.l3{background:#a81b23}.heat .d.l4{background:var(--red);color:#fff}
+  .heat .d.full{background:var(--ok);color:#fff;border-color:#2f5d33}
+  .heat .d.today{outline:2px solid #fff;outline-offset:-1px;color:#fff}
+  .heat .d.future{opacity:.35}
+  .heat .dow{aspect-ratio:auto;background:none;border:0;font-size:10px;letter-spacing:1px;color:var(--muted)}
+  .legend{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:var(--muted)}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .loglist{list-style:none;margin:0;padding:0}
+  .loglist li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .loglist li:last-child{border-bottom:0}
+  .loglist .when{color:var(--muted);font-size:13px}
+  .loglist button{padding:4px 8px;font-size:11px;background:transparent;box-shadow:none;border:1px solid var(--line);color:var(--muted)}
+
+  /* ---------- nav ---------- */
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(11,11,12,.96);backdrop-filter:blur(8px);border-top:2px solid var(--red);padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+  nav .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  nav button{background:none;box-shadow:none;border:0;border-radius:0;padding:8px 0;color:var(--muted);font-size:12px;letter-spacing:2px;display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav button:active{transform:none}
+  nav button .ic{font-size:22px}
+  nav button.on{color:var(--white)}
+  nav button.on .ic{filter:drop-shadow(0 0 6px var(--red))}
+
+  .view{display:none}.view.on{display:block}
+  .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--red);color:#fff;padding:12px 18px;border-radius:10px;font-family:var(--head);letter-spacing:2px;font-size:16px;opacity:0;transition:.25s;pointer-events:none;z-index:9;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .banner{background:#2a1113;border:1px solid #5a1a1d;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.4;margin:10px 0}
+  .banner b{color:var(--white)}
+  .center{text-align:center}
+  /* ---------- board ---------- */
+  .grouptotal{text-align:center;padding:6px 0 10px}
+  .grouptotal .n{font-family:var(--head);font-size:52px;line-height:1;color:var(--white)}
+  .grouptotal .l{font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+  .board{list-style:none;margin:0;padding:0}
+  .board li{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 8px;border-bottom:1px solid var(--line);border-radius:8px}
+  .board li:last-child{border-bottom:0}
+  .board li.me{background:#2a1113;border:1px solid #5a1a1d}
+  .board .rank{font-family:var(--head);font-size:20px;color:var(--muted);text-align:center}
+  .board li:nth-child(1) .rank{color:#ffd54a}.board li:nth-child(2) .rank{color:#cfcfcf}.board li:nth-child(3) .rank{color:#d08a4e}
+  .board .name{font-weight:600;font-size:17px;display:flex;align-items:center;gap:6px;min-width:0}
+  .board .name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .board .sub{font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .board .bar{height:5px;background:#0e0e10;border-radius:3px;margin-top:6px;overflow:hidden}
+  .board .bar i{display:block;height:100%;background:var(--red)}
+  .board .bar i.full{background:var(--ok)}
+  .board .tot{font-family:var(--head);font-size:24px;text-align:right;line-height:1}
+  .board .tot small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);letter-spacing:1px}
+  .syncpill{display:inline-flex;align-items:center;gap:6px}
+  .flagline{text-align:center;font-family:var(--head);letter-spacing:4px;font-size:14px;color:var(--muted);margin:18px 0 8px}
+  .flagline span{color:var(--red)}
+  @media (max-width:360px){h1 .big{font-size:40px}h1 .red{font-size:46px}h1 .sub{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo"><div class="ring">F3</div><div>F3<small>NATION</small></div></div>
+      <div class="tag">FITNESS<br>FELLOWSHIP<br>FAITH</div>
+    </div>
+    <h1><span class="big" id="hdrTotal">10,000</span><span class="red">Pushup</span><span class="sub">Challenge</span></h1>
+    <div class="year" id="hdrYear">2026</div>
+    <div class="motto">Forged Through Discipline</div>
+  </header>
+
+  <!-- ================= TODAY ================= -->
+  <section class="view on" id="view-today">
+    <div class="panel">
+      <h2 id="todayTitle">Today</h2>
+      <div class="stats">
+        <div class="stat"><div class="icon">📅</div><div class="v" id="stDay">—</div><div class="l">Day</div></div>
+        <div class="stat"><div class="icon">💪</div><div class="v" id="stGoal">109</div><div class="l">Per Day</div></div>
+        <div class="stat"><div class="icon">🎯</div><div class="v" id="stTotal">0</div><div class="l">Total</div></div>
+      </div>
+      <div class="ringwrap">
+        <svg viewBox="0 0 200 200"><circle class="track" cx="100" cy="100" r="86"/><circle class="bar" id="ringBar" cx="100" cy="100" r="86"/></svg>
+        <div class="ringtxt"><div class="n" id="ringNum">0</div><div class="g">of <b id="ringGoal">109</b> today</div></div>
+      </div>
+      <div class="center" id="todayStatus"></div>
+    </div>
+
+    <div class="panel" id="setsPanel">
+      <h2 id="setsTitle">Sets</h2>
+      <div class="sets" id="sets"></div>
+      <button class="full" id="btnAllOnce">Log All At Once</button>
+    </div>
+
+    <div class="panel">
+      <h2>Quick Log</h2>
+      <div class="quick">
+        <button class="ghost" data-add="5">+5</button>
+        <button class="ghost" data-add="10">+10</button>
+        <button class="ghost" data-add="20">+20</button>
+        <button class="ghost" data-add="25">+25</button>
+      </div>
+      <div class="customrow">
+        <input type="number" id="customN" inputmode="numeric" min="1" max="2000" placeholder="Custom count">
+        <button id="btnCustom">Add</button>
+      </div>
+      <div id="todayLog" style="margin-top:12px"></div>
+    </div>
+    <div class="flagline">INDIANAPOLIS <span>★</span> THE BLOCKYARD</div>
+  </section>
+
+  <!-- ================= PROGRESS ================= -->
+  <section class="view" id="view-progress">
+    <div class="panel">
+      <h2>Challenge Progress</h2>
+      <div class="row"><div style="font-family:var(--head);font-size:34px;letter-spacing:1px"><span id="pTotal">0</span> <span style="color:var(--muted);font-size:20px">/ <span id="pGoal">10,000</span></span></div><div id="pPct" style="font-family:var(--head);font-size:26px;color:var(--red)">0%</div></div>
+      <div class="bigbar"><i id="pBar"></i></div>
+      <div class="stats">
+        <div class="stat"><div class="v" id="pDays">0</div><div class="l">Days Done</div></div>
+        <div class="stat"><div class="v" id="pStreak">0</div><div class="l">Streak</div></div>
+        <div class="stat"><div class="v" id="pLeft">0</div><div class="l">Days Left</div></div>
+      </div>
+      <div class="banner" id="paceBox"></div>
+    </div>
+    <div class="panel">
+      <h2>Calendar</h2>
+      <div class="heat" id="heat"></div>
+      <div class="legend">Less <i style="background:#1c1c20"></i><i style="background:#3a1416"></i><i style="background:#6e1a1f"></i><i style="background:#a81b23"></i><i style="background:var(--red)"></i> Goal <i style="background:var(--ok)"></i></div>
+    </div>
+    <div class="panel">
+      <h2>Records</h2>
+      <div class="stats">
+        <div class="stat"><div class="v" id="rBest">0</div><div class="l">Best Day</div></div>
+        <div class="stat"><div class="v" id="rAvg">0</div><div class="l">Avg / Day</div></div>
+        <div class="stat"><div class="v" id="rBestStreak">0</div><div class="l">Best Streak</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PAX BOARD ================= -->
+  <section class="view" id="view-pax">
+    <div class="panel">
+      <h2 id="boardTitle">The PAX</h2>
+      <div class="grouptotal"><div class="n" id="bGroupTotal">—</div><div class="l" id="bGroupLabel">Pushups together</div></div>
+      <div class="stats">
+        <div class="stat"><div class="v" id="bMen">—</div><div class="l">Men In</div></div>
+        <div class="stat"><div class="v" id="bToday">—</div><div class="l">Today</div></div>
+        <div class="stat"><div class="v" id="bOnPace">—</div><div class="l">On Pace</div></div>
+      </div>
+      <div class="row" style="margin-top:6px"><span class="pill syncpill" id="syncPill">Sync: off</span><button class="ghost small" id="btnRefreshBoard">Refresh</button></div>
+    </div>
+    <div class="panel">
+      <h2>Leaderboard</h2>
+      <div id="boardMsg" class="hint center"></div>
+      <ul class="board" id="board"></ul>
+    </div>
+    <div class="flagline">INDIANAPOLIS <span>★</span> THE BLOCKYARD</div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="view" id="view-settings">
+    <div class="panel">
+      <h2>Your Challenge</h2>
+      <label class="field"><span>F3 Name (shown on the PAX board)</span><input type="text" id="sName" placeholder="e.g. Blockhead" maxlength="30"></label>
+      <label class="field"><span>Pushups Per Day</span><input type="number" id="sDaily" inputmode="numeric" min="1" max="2000"></label>
+      <label class="field"><span>Total Goal</span><input type="number" id="sTotal" inputmode="numeric" min="1" max="1000000"></label>
+      <div class="timegrid">
+        <label class="field"><span>Start Date</span><input type="date" id="sStart"></label>
+        <label class="field"><span>End Date</span><input type="date" id="sEnd"></label>
+      </div>
+      <p class="hint" id="sMath"></p>
+      <button class="ghost small" id="btnPreset">Reset to F3 Default (109 / day · 10,000 · Oct 1 – Dec 31)</button>
+    </div>
+
+    <div class="panel">
+      <h2>How You Do Them</h2>
+      <div class="seg" id="modeSeg">
+        <button data-mode="once">All At Once</button>
+        <button data-mode="split">Split Into Sets</button>
+      </div>
+      <div id="splitOpts">
+        <label class="field"><span>Sets Per Day</span>
+          <div class="seg" id="setsSeg">
+            <button data-sets="1">1</button><button data-sets="2">2</button><button data-sets="3">3</button><button data-sets="4">4</button>
+          </div>
+        </label>
+        <p class="hint" id="splitMath"></p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Reminders</h2>
+      <div class="row">
+        <div><div style="font-size:16px;font-weight:600">Push notifications</div><div class="hint" style="margin:2px 0 0">One reminder per set, at the times below.</div></div>
+        <label class="switch"><input type="checkbox" id="sNotify"><i></i></label>
+      </div>
+      <div style="margin-top:8px"><span class="pill" id="permPill">Permission: unknown</span></div>
+      <div class="timegrid" id="timeGrid" style="margin-top:12px"></div>
+      <button class="ghost small" id="btnTestNotif" style="margin-top:12px;width:100%">Send Test Notification</button>
+      <button class="ghost small" id="btnIcs" style="margin-top:8px;width:100%">Download Calendar Reminders (.ics)</button>
+      <p class="hint">Notifications fire while the app is open or installed to your home screen (Android Chrome works best; iPhone requires adding to Home Screen in Safari and iOS 16.4+). For a guaranteed reminder on any phone, download the .ics file and import it into your calendar app.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Install</h2>
+      <p class="hint">Add this app to your home screen for a full-screen experience: on Android tap <b>⋮ → Add to Home screen</b>; on iPhone tap <b>Share → Add to Home Screen</b>.</p>
+      <button class="ghost small" id="btnInstall" style="width:100%;display:none">Install App</button>
+    </div>
+
+    <div class="panel">
+      <h2>Data</h2>
+      <div class="row">
+        <button class="ghost small" id="btnExport">Export JSON</button>
+        <button class="ghost small" id="btnImport">Import JSON</button>
+        <input type="file" id="fileImport" accept="application/json" style="display:none">
+      </div>
+      <button class="ghost small" id="btnReset" style="margin-top:10px;width:100%;border-color:#5a1a1d;color:#f06a70">Erase All Progress</button>
+      <p class="hint">Everything is stored on this device only. Nothing is uploaded.</p>
+    </div>
+  </section>
+</div>
+
+<nav><div class="in">
+  <button class="on" data-view="today"><span class="ic">💪</span>Today</button>
+  <button data-view="progress"><span class="ic">📈</span>Progress</button>
+  <button data-view="pax"><span class="ic">🏆</span>PAX</button>
+  <button data-view="settings"><span class="ic">⚙️</span>Settings</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const KEY_S = 'f3pu.settings', KEY_L = 'f3pu.log', KEY_N = 'f3pu.notified', KEY_D = 'f3pu.dirty';
+
+  const DEFAULTS = {
+    name: '', daily: 109, total: 10000, start: '2026-10-01', end: '2026-12-31',
+    mode: 'split', sets: 3, times: ['06:00', '12:00', '17:00', '21:00'], notify: false
+  };
+  let S = load(KEY_S, DEFAULTS); S = Object.assign({}, DEFAULTS, S);
+  let L = load(KEY_L, {});          // { 'YYYY-MM-DD': [ {t, n, set} ] }
+  let N = load(KEY_N, {});          // { 'YYYY-MM-DD': {setIdx:true} } reminders already fired
+  let D = load(KEY_D, {});          // { 'YYYY-MM-DD': true } days not yet pushed to the shared board
+
+  function load(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } }
+  function save() { localStorage.setItem(KEY_S, JSON.stringify(S)); localStorage.setItem(KEY_L, JSON.stringify(L)); localStorage.setItem(KEY_N, JSON.stringify(N)); localStorage.setItem(KEY_D, JSON.stringify(D)); }
+
+  // ---------- date helpers ----------
+  const pad = (n) => String(n).padStart(2, '0');
+  const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = () => keyOf(new Date());
+  const parse = (k) => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (k, n) => { const d = parse(k); d.setDate(d.getDate() + n); return keyOf(d); };
+  const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+  const fmt = (n) => Number(n).toLocaleString('en-US');
+  const fmtTime = (t) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${((h + 11) % 12) + 1}:${pad(m)} ${ap}`; };
+
+  // ---------- model ----------
+  const setCount = () => (S.mode === 'once' ? 1 : S.sets);
+  function setTargets() {
+    const n = setCount(), base = Math.floor(S.daily / n), rem = S.daily % n;
+    return Array.from({ length: n }, (_, i) => base + (i < rem ? 1 : 0));
+  }
+  const dayTotal = (k) => (L[k] || []).reduce((a, e) => a + e.n, 0);
+  const grandTotal = () => Object.keys(L).reduce((a, k) => a + dayTotal(k), 0);
+  function setDone(k, i) { return (L[k] || []).filter((e) => e.set === i).reduce((a, e) => a + e.n, 0); }
+  function addEntry(n, set = null) {
+    n = Math.max(1, Math.min(5000, Math.round(Number(n) || 0)));
+    const k = today(); (L[k] ||= []).push({ t: Date.now(), n, set });
+    markDirty(k); render();
+    const d = dayTotal(k);
+    toast(d >= S.daily ? `✅ ${fmt(d)} — DAILY GOAL HIT!` : `+${n} · ${fmt(d)} / ${S.daily}`);
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  // ---------- toast ----------
+  let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+
+  // ---------- render ----------
+  function render() { renderHeader(); renderToday(); renderProgress(); renderSettings(); }
+
+  function renderHeader() {
+    $('#hdrTotal').textContent = fmt(S.total);
+    $('#hdrYear').textContent = S.start.slice(0, 4);
+  }
+
+  function renderToday() {
+    const k = today(), done = dayTotal(k), goal = S.daily, dayN = daysBetween(S.start, k) + 1, len = daysBetween(S.start, S.end) + 1;
+    $('#todayTitle').textContent = (S.name ? S.name + ' · ' : '') + new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    $('#stDay').textContent = dayN < 1 ? `−${1 - dayN}` : dayN > len ? 'END' : `${dayN}/${len}`;
+    $('#stGoal').textContent = fmt(goal);
+    $('#stTotal').textContent = fmt(grandTotal());
+    $('#ringNum').textContent = fmt(done); $('#ringGoal').textContent = fmt(goal);
+    const C = 2 * Math.PI * 86, pct = Math.min(1, done / goal), bar = $('#ringBar');
+    bar.style.strokeDasharray = C; bar.style.strokeDashoffset = C * (1 - pct); bar.classList.toggle('done', done >= goal);
+    const left = goal - done;
+    $('#todayStatus').innerHTML = done >= goal
+      ? `<span class="pill ok">Goal complete · ${done > goal ? '+' + fmt(done - goal) + ' extra' : 'well done'}</span>`
+      : dayN < 1 ? `<span class="pill warn">Challenge starts in ${1 - dayN} day${1 - dayN === 1 ? '' : 's'} — early reps still count</span>`
+      : `<span class="pill">${fmt(left)} to go</span>`;
+
+    // sets
+    const targets = setTargets(), wrap = $('#sets'); wrap.innerHTML = '';
+    $('#setsTitle').textContent = S.mode === 'once' ? 'Today\'s Set' : `${targets.length} Sets`;
+    targets.forEach((t, i) => {
+      const got = setDone(k, i), isDone = got >= t, time = S.times[i] || '';
+      const el = document.createElement('div'); el.className = 'set' + (isDone ? ' done' : '');
+      el.innerHTML = `<div class="num">${isDone ? '✓' : i + 1}</div>
+        <div class="info"><div class="t">${fmt(t)} <span style="font-size:14px;color:var(--muted)">pushups</span></div>
+        <div class="m">${time ? `<span class="time">${fmtTime(time)}</span> · ` : ''}${isDone ? 'done' : got ? fmt(got) + ' of ' + fmt(t) + ' logged' : 'not yet'}</div></div>
+        <button class="small" data-set="${i}" data-n="${Math.max(1, t - got)}" ${isDone ? 'disabled' : ''}>${isDone ? 'Done' : got ? 'Finish ' + (t - got) : 'Log ' + t}</button>`;
+      wrap.appendChild(el);
+    });
+    const allBtn = $('#btnAllOnce');
+    allBtn.style.display = S.mode === 'once' ? 'none' : 'block';
+    allBtn.disabled = done >= goal; allBtn.textContent = done >= goal ? 'All Done Today' : `Log Remaining ${fmt(Math.max(0, left))} At Once`;
+
+    // today's log
+    const entries = (L[k] || []).slice().reverse();
+    $('#todayLog').innerHTML = entries.length ? `<ul class="loglist">${entries.map((e, idx) => `<li><span>+${e.n}${e.set != null ? ` <span class="when">· set ${e.set + 1}</span>` : ''}</span><span class="when">${new Date(e.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} <button data-del="${entries.length - 1 - idx}">undo</button></span></li>`).join('')}</ul>` : '<p class="hint center">No pushups logged yet today. Get after it.</p>';
+  }
+
+  function renderProgress() {
+    const total = grandTotal(), pct = Math.min(100, total / S.total * 100);
+    $('#pTotal').textContent = fmt(total); $('#pGoal').textContent = fmt(S.total); $('#pPct').textContent = Math.floor(pct) + '%'; $('#pBar').style.width = pct + '%';
+    const len = daysBetween(S.start, S.end) + 1, k = today();
+    const dayN = Math.min(len, Math.max(0, daysBetween(S.start, k) + 1));
+    const daysLeft = Math.max(0, daysBetween(k, S.end) + (k <= S.end ? 1 : 0));
+    let daysDone = 0, streak = 0, best = 0, bestStreak = 0, cur = 0, sum = 0, cnt = 0;
+    for (let i = 0; i < len; i++) {
+      const dk = addDays(S.start, i); if (dk > k) break;
+      const d = dayTotal(dk); if (d > 0) { sum += d; cnt++; }
+      best = Math.max(best, d);
+      if (d >= S.daily) { daysDone++; cur++; bestStreak = Math.max(bestStreak, cur); } else cur = 0;
+    }
+    // current streak = consecutive goal days ending today or yesterday
+    let sk = dayTotal(k) >= S.daily ? k : addDays(k, -1);
+    while (sk >= S.start && dayTotal(sk) >= S.daily) { streak++; sk = addDays(sk, -1); }
+    $('#pDays').textContent = daysDone; $('#pStreak').textContent = streak; $('#pLeft').textContent = daysLeft;
+    $('#rBest').textContent = fmt(best); $('#rAvg').textContent = cnt ? fmt(Math.round(sum / cnt)) : 0; $('#rBestStreak').textContent = bestStreak;
+
+    // pace is judged against completed days; today still counts as in progress
+    const expected = Math.min(S.total, Math.max(0, dayN - 1) * S.daily), diff = total - expected, remaining = Math.max(0, S.total - total);
+    const perDayNeeded = daysLeft > 0 ? Math.ceil(remaining / daysLeft) : remaining;
+    let msg;
+    if (k < S.start) msg = `Challenge begins <b>${parse(S.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</b>. ${fmt(S.daily)} a day for ${len} days.`;
+    else if (total >= S.total) msg = `<b>🏆 ${fmt(S.total)} COMPLETE.</b> Forged through discipline.`;
+    else if (diff >= 0) msg = `<b>On pace</b> — ${fmt(diff)} ahead of schedule. Need <b>${fmt(perDayNeeded)}/day</b> to finish by ${parse(S.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`;
+    else msg = `<b>${fmt(-diff)} behind pace.</b> Need <b>${fmt(perDayNeeded)}/day</b> for the remaining ${daysLeft} days to hit ${fmt(S.total)}.`;
+    $('#paceBox').innerHTML = msg;
+
+    // heat calendar
+    const heat = $('#heat'); heat.innerHTML = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((d) => { const e = document.createElement('div'); e.className = 'd dow'; e.textContent = d; heat.appendChild(e); });
+    const firstDow = parse(S.start).getDay();
+    for (let i = 0; i < firstDow; i++) { const e = document.createElement('div'); e.className = 'd'; e.style.visibility = 'hidden'; heat.appendChild(e); }
+    for (let i = 0; i < len; i++) {
+      const dk = addDays(S.start, i), d = dayTotal(dk), r = d / S.daily;
+      const e = document.createElement('div'); e.className = 'd';
+      if (d >= S.daily) e.classList.add('full'); else if (r >= .75) e.classList.add('l4'); else if (r >= .5) e.classList.add('l3'); else if (r >= .25) e.classList.add('l2'); else if (d > 0) e.classList.add('l1');
+      if (dk === k) e.classList.add('today'); if (dk > k) e.classList.add('future');
+      e.textContent = parse(dk).getDate(); e.title = `${dk}: ${d}`;
+      heat.appendChild(e);
+    }
+  }
+
+  function renderSettings() {
+    $('#sName').value = S.name; $('#sDaily').value = S.daily; $('#sTotal').value = S.total; $('#sStart').value = S.start; $('#sEnd').value = S.end;
+    const len = daysBetween(S.start, S.end) + 1;
+    $('#sMath').innerHTML = len > 0 ? `${len} days × ${fmt(S.daily)}/day = <b>${fmt(len * S.daily)}</b> pushups${len * S.daily < S.total ? ` — <span style="color:#f0b24a">that's short of your ${fmt(S.total)} goal; ${Math.ceil(S.total / len)}/day would hit it.</span>` : '.'}` : 'End date must be after start date.';
+    $$('#modeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.mode === S.mode));
+    $$('#setsSeg button').forEach((b) => b.classList.toggle('on', Number(b.dataset.sets) === S.sets));
+    $('#splitOpts').style.display = S.mode === 'split' ? 'block' : 'none';
+    $('#splitMath').textContent = 'Each set: ' + setTargets().join(' / ') + ' pushups';
+    $('#sNotify').checked = S.notify;
+    const grid = $('#timeGrid'); grid.innerHTML = '';
+    for (let i = 0; i < setCount(); i++) {
+      const l = document.createElement('label'); l.className = 'field'; l.style.margin = '0';
+      l.innerHTML = `<span>${S.mode === 'once' ? 'Reminder time' : 'Set ' + (i + 1)}</span><input type="time" data-time="${i}" value="${S.times[i] || '08:00'}">`;
+      grid.appendChild(l);
+    }
+    const p = $('#permPill');
+    if (!('Notification' in window)) { p.textContent = 'Notifications not supported here'; p.className = 'pill bad'; }
+    else { const s = Notification.permission; p.textContent = 'Permission: ' + s; p.className = 'pill ' + (s === 'granted' ? 'ok' : s === 'denied' ? 'bad' : 'warn'); }
+  }
+
+  // ---------- events ----------
+  $$('nav button').forEach((b) => b.addEventListener('click', () => {
+    $$('nav button').forEach((x) => x.classList.toggle('on', x === b));
+    $$('.view').forEach((v) => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
+    window.scrollTo({ top: 0 });
+    if (b.dataset.view === 'pax') renderBoard();
+  }));
+  $('#sets').addEventListener('click', (e) => { const b = e.target.closest('button[data-set]'); if (b) addEntry(b.dataset.n, Number(b.dataset.set)); });
+  $('#btnAllOnce').addEventListener('click', () => { const left = S.daily - dayTotal(today()); if (left > 0) addEntry(left, S.mode === 'once' ? 0 : null); });
+  $$('.quick button').forEach((b) => b.addEventListener('click', () => addEntry(b.dataset.add, S.mode === 'once' ? 0 : null)));
+  $('#btnCustom').addEventListener('click', () => { const v = $('#customN').value; if (v > 0) { addEntry(v, S.mode === 'once' ? 0 : null); $('#customN').value = ''; } });
+  $('#customN').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnCustom').click(); });
+  $('#todayLog').addEventListener('click', (e) => { const b = e.target.closest('button[data-del]'); if (!b) return; const k = today(); L[k].splice(Number(b.dataset.del), 1); if (!L[k].length) delete L[k]; markDirty(k); render(); toast('Entry removed'); });
+
+  const bindNum = (id, key, min, max) => $(id).addEventListener('change', (e) => { const v = Math.round(Number(e.target.value)); if (v >= min && v <= max) { S[key] = v; save(); render(); } else render(); });
+  bindNum('#sDaily', 'daily', 1, 2000); bindNum('#sTotal', 'total', 1, 1000000);
+  $('#sDaily').addEventListener('change', fullResync);
+  $('#sName').addEventListener('change', (e) => { S.name = e.target.value.trim().slice(0, 30); save(); render(); fullResync(); });
+  $('#sStart').addEventListener('change', (e) => { if (e.target.value) { S.start = e.target.value; if (S.end < S.start) S.end = S.start; save(); render(); } });
+  $('#sEnd').addEventListener('change', (e) => { if (e.target.value && e.target.value >= S.start) { S.end = e.target.value; save(); render(); } else render(); });
+  $('#btnPreset').addEventListener('click', () => { Object.assign(S, { daily: 109, total: 10000, start: '2026-10-01', end: '2026-12-31' }); save(); render(); toast('F3 defaults restored'); });
+  $('#modeSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { S.mode = b.dataset.mode; save(); render(); } });
+  $('#setsSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { S.sets = Number(b.dataset.sets); save(); render(); } });
+  $('#timeGrid').addEventListener('change', (e) => { const i = e.target.dataset.time; if (i != null && e.target.value) { S.times[Number(i)] = e.target.value; save(); renderToday(); } });
+
+  // ---------- notifications ----------
+  async function ensurePermission() {
+    if (!('Notification' in window)) { toast('Not supported on this browser'); return false; }
+    if (Notification.permission === 'granted') return true;
+    const r = await Notification.requestPermission(); renderSettings();
+    return r === 'granted';
+  }
+  async function notify(title, body) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const opts = { body, icon: 'icon.svg', badge: 'icon.svg', tag: 'f3-' + Date.now(), vibrate: [100, 50, 100] };
+    try { const reg = await navigator.serviceWorker?.getRegistration(); if (reg) return reg.showNotification(title, opts); } catch {}
+    try { new Notification(title, opts); } catch {}
+  }
+  $('#sNotify').addEventListener('change', async (e) => {
+    if (e.target.checked) { const ok = await ensurePermission(); S.notify = ok; if (!ok) e.target.checked = false; else toast('Reminders on'); }
+    else S.notify = false;
+    save(); renderSettings();
+  });
+  $('#btnTestNotif').addEventListener('click', async () => { if (await ensurePermission()) { notify('F3 Pushup Challenge', 'Test reminder. Forged Through Discipline. 💪'); toast('Test sent'); } });
+
+  function checkReminders() {
+    if (!S.notify) return;
+    const k = today(), now = new Date(), hm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const targets = setTargets(); N[k] ||= {};
+    targets.forEach((t, i) => {
+      const time = S.times[i]; if (!time || N[k][i]) return;
+      // fire if we're at or within 30 min past the reminder time and the set is not done
+      const [h, m] = time.split(':').map(Number); const mins = h * 60 + m, nowMins = now.getHours() * 60 + now.getMinutes();
+      if (nowMins >= mins && nowMins - mins <= 30 && setDone(k, i) < t) {
+        N[k][i] = true; save();
+        const who = S.name ? `${S.name}, ` : '';
+        notify(`${who}time for ${S.mode === 'once' ? 'your pushups' : 'Set ' + (i + 1)}`, `${fmt(t)} pushups · ${fmt(S.daily - dayTotal(k))} left today. Forged Through Discipline.`);
+      }
+    });
+    // tidy old days
+    Object.keys(N).forEach((d) => { if (d !== k) delete N[d]; });
+  }
+  setInterval(checkReminders, 30000); checkReminders();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); checkReminders(); } });
+
+  // ---------- .ics export ----------
+  $('#btnIcs').addEventListener('click', () => {
+    const targets = setTargets(), dt = (k, t) => k.replace(/-/g, '') + 'T' + t.replace(':', '') + '00';
+    const until = S.end.replace(/-/g, '') + 'T235959';
+    const ev = targets.map((t, i) => {
+      const time = S.times[i] || '08:00';
+      return ['BEGIN:VEVENT', `UID:f3pushups-set${i + 1}-${S.start}@f3`, `DTSTAMP:${dt(today(), '0000')}`, `DTSTART:${dt(S.start, time)}`, `DTEND:${dt(S.start, time.slice(0, 3) + pad((Number(time.slice(3)) + 15) % 60))}`,
+        `RRULE:FREQ=DAILY;UNTIL=${until}`, `SUMMARY:F3 Pushups${targets.length > 1 ? ' – Set ' + (i + 1) : ''}: ${t} reps`, `DESCRIPTION:${S.daily}/day · ${fmt(S.total)} total. Forged Through Discipline.`,
+        'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Pushups!', 'END:VALARM', 'END:VEVENT'].join('\r\n');
+    }).join('\r\n');
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//F3 Pushup Challenge//EN', ev, 'END:VCALENDAR'].join('\r\n');
+    download('f3-pushup-reminders.ics', ics, 'text/calendar');
+  });
+  function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+
+  // ---------- data ----------
+  $('#btnExport').addEventListener('click', () => download('f3-pushups-backup.json', JSON.stringify({ settings: S, log: L }, null, 2), 'application/json'));
+  $('#btnImport').addEventListener('click', () => $('#fileImport').click());
+  $('#fileImport').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const d = JSON.parse(await f.text()); if (d.settings) S = Object.assign({}, DEFAULTS, d.settings); if (d.log) L = d.log; save(); render(); fullResync(); toast('Imported'); } catch { toast('Invalid file'); }
+    e.target.value = '';
+  });
+  $('#btnReset').addEventListener('click', () => { if (confirm('Erase ALL logged pushups? This cannot be undone.')) { L = {}; N = {}; save(); render(); toast('Progress erased'); } });
+
+  // ---------- shared PAX board (Supabase) ----------
+  const CFG = Object.assign({ supabaseUrl: '', supabaseAnonKey: '', region: 'Indy South' }, window.F3_CONFIG || {});
+  const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
+  let syncing = false, syncState = sb ? 'idle' : 'off', boardCache = null;
+
+  function markDirty(k) { D[k] = true; save(); syncNow(); }
+  function fullResync() { Object.keys(L).forEach((k) => { D[k] = true; }); D[today()] = true; save(); syncNow(); }
+  function renderSyncPill() {
+    const p = $('#syncPill'); if (!p) return;
+    const map = { off: ['Sync: not configured', ''], idle: ['Sync: ready', ''], ok: ['Synced', 'ok'], err: ['Sync failed · will retry', 'bad'], busy: ['Syncing…', 'warn'], noname: ['Set your F3 name to join', 'warn'] };
+    const [t, c] = map[syncState] || map.idle; p.textContent = t; p.className = 'pill syncpill ' + c;
+  }
+  async function syncNow() {
+    if (!sb) return;
+    if (!S.name) { syncState = 'noname'; renderSyncPill(); return; }
+    if (syncing || !navigator.onLine) return;
+    const days = Object.keys(D); if (!days.length) { if (syncState !== 'ok') { syncState = 'ok'; renderSyncPill(); } return; }
+    syncing = true; syncState = 'busy'; renderSyncPill();
+    try {
+      const rows = days.map((k) => ({ region: CFG.region, f3_name: S.name, day: k, count: dayTotal(k), daily_goal: S.daily, updated_at: new Date().toISOString() }));
+      const { error } = await sb.from('f3_pushups').upsert(rows, { onConflict: 'region,name_key,day' });
+      if (error) throw error;
+      days.forEach((k) => delete D[k]); save(); syncState = 'ok'; boardCache = null;
+    } catch (e) { console.warn('sync failed', e); syncState = 'err'; }
+    finally { syncing = false; renderSyncPill(); }
+  }
+  async function renderBoard(force) {
+    renderSyncPill();
+    $('#boardTitle').textContent = CFG.region + ' PAX';
+    const msg = $('#boardMsg'), list = $('#board');
+    if (!sb) { msg.innerHTML = 'The shared board is not connected yet. Add the Supabase URL and anon key to <b>config.js</b>.'; list.innerHTML = ''; return; }
+    if (!S.name) msg.innerHTML = 'Enter your F3 name in <b>Settings</b> to appear on the board.'; else msg.textContent = '';
+    await syncNow();
+    if (!boardCache || force) {
+      msg.textContent = msg.textContent || 'Loading…';
+      const { data, error } = await sb.from('f3_board').select('*').eq('region', CFG.region).order('total', { ascending: false });
+      if (error) { msg.textContent = 'Could not load the board: ' + error.message; return; }
+      boardCache = data || []; if (msg.textContent === 'Loading…') msg.textContent = '';
+    }
+    const rows = boardCache, me = S.name.trim().toLowerCase();
+    const len = daysBetween(S.start, S.end) + 1, dayN = Math.min(len, Math.max(0, daysBetween(S.start, today()) + 1));
+    const expected = Math.max(0, dayN - 1) * 109;
+    const group = rows.reduce((a, r) => a + r.total, 0), todaySum = rows.reduce((a, r) => a + r.today_count, 0), onPace = rows.filter((r) => r.total >= expected).length;
+    $('#bGroupTotal').textContent = fmt(group); $('#bGroupLabel').textContent = `pushups together · ${fmt(rows.length * 10000)} goal`;
+    $('#bMen').textContent = rows.length; $('#bToday').textContent = fmt(todaySum); $('#bOnPace').textContent = rows.length ? `${onPace}/${rows.length}` : '—';
+    if (!rows.length) { msg.textContent = msg.textContent || 'No one has posted yet. Be the first.'; list.innerHTML = ''; return; }
+    list.innerHTML = rows.map((r, i) => {
+      const pct = Math.min(100, r.total / 10000 * 100), full = r.total >= 10000;
+      return `<li class="${r.name_key === me ? 'me' : ''}">
+        <div class="rank">${full ? '🏆' : i + 1}</div>
+        <div><div class="name"><span>${esc(r.f3_name)}</span>${r.total >= expected ? '<span class="pill ok" style="padding:1px 6px;font-size:9px">pace</span>' : ''}</div>
+          <div class="sub">${r.days_done} day${r.days_done === 1 ? '' : 's'} at goal · today ${fmt(r.today_count)}</div>
+          <div class="bar"><i class="${full ? 'full' : ''}" style="width:${pct}%"></i></div></div>
+        <div class="tot">${fmt(r.total)}<small>${Math.floor(pct)}%</small></div></li>`;
+    }).join('');
+  }
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  $('#btnRefreshBoard').addEventListener('click', () => renderBoard(true));
+  window.addEventListener('online', syncNow);
+  if (sb) syncNow();
+
+  // ---------- install ----------
+  let deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; $('#btnInstall').style.display = 'block'; });
+  $('#btnInstall').addEventListener('click', async () => { if (deferredInstall) { deferredInstall.prompt(); deferredInstall = null; $('#btnInstall').style.display = 'none'; } });
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+  // midnight rollover
+  let lastDay = today(); setInterval(() => { if (today() !== lastDay) { lastDay = today(); render(); } }, 60000);
+
+  render();
+})();
+</script>
+</body>
+</html>

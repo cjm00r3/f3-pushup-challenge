@@ -1,0 +1,14 @@
+{
+  "name": "F3 10,000 Pushup Challenge",
+  "short_name": "F3 Pushups",
+  "description": "Forged Through Discipline. Track your daily pushups for the F3 10,000 Pushup Challenge.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0b0c",
+  "theme_color": "#0b0b0c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
