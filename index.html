@@ -181,6 +181,13 @@
   .board .tot{font-family:var(--head);font-size:24px;text-align:right;line-height:1}
   .board .tot small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);letter-spacing:1px}
   .syncpill{display:inline-flex;align-items:center;gap:6px}
+  details.past{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  details.past summary{cursor:pointer;font-family:var(--head);letter-spacing:2px;text-transform:uppercase;font-size:14px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:8px}
+  details.past summary::before{content:"+";color:var(--red);font-size:18px;line-height:1}
+  details.past[open] summary::before{content:"–"}
+  details.past summary::-webkit-details-marker{display:none}
+  .heat .d.past{cursor:pointer}
+  .heat .d.past:active{outline:2px solid var(--red);outline-offset:-1px}
   .flagline{text-align:center;font-family:var(--head);letter-spacing:4px;font-size:14px;color:var(--muted);margin:18px 0 8px}
   .flagline span{color:var(--red)}
   @media (max-width:360px){h1 .big{font-size:40px}h1 .red{font-size:46px}h1 .sub{font-size:26px}}
@@ -233,6 +240,15 @@
         <button id="btnCustom">Add</button>
       </div>
       <div id="todayLog" style="margin-top:12px"></div>
+      <details class="past" id="pastBox">
+        <summary>Missed a day? Log a past day</summary>
+        <div class="customrow" style="margin-top:10px">
+          <input type="date" id="pastDate" style="flex:1.3">
+          <input type="number" id="pastN" inputmode="numeric" min="1" max="2000" placeholder="Count">
+          <button id="btnPast">Add</button>
+        </div>
+        <div id="pastInfo" style="margin-top:10px"></div>
+      </details>
     </div>
     <div class="flagline">FITNESS <span>★</span> FELLOWSHIP <span>★</span> FAITH</div>
   </section>
@@ -403,12 +419,12 @@
   const dayTotal = (k) => (L[k] || []).reduce((a, e) => a + e.n, 0);
   const grandTotal = () => Object.keys(L).reduce((a, k) => a + dayTotal(k), 0);
   function setDone(k, i) { return (L[k] || []).filter((e) => e.set === i).reduce((a, e) => a + e.n, 0); }
-  function addEntry(n, set = null) {
+  function addEntry(n, set = null, k = today()) {
     n = Math.max(1, Math.min(5000, Math.round(Number(n) || 0)));
-    const k = today(); (L[k] ||= []).push({ t: Date.now(), n, set });
+    (L[k] ||= []).push({ t: Date.now(), n, set });
     markDirty(k); render();
-    const d = dayTotal(k);
-    toast(d >= S.daily ? `✅ ${fmt(d)} — DAILY GOAL HIT!` : `+${n} · ${fmt(d)} / ${S.daily}`);
+    const d = dayTotal(k), label = k === today() ? '' : parse(k).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ';
+    toast(d >= S.daily ? `✅ ${label}${fmt(d)} — DAILY GOAL HIT!` : `${label}+${n} · ${fmt(d)} / ${S.daily}`);
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
@@ -497,7 +513,7 @@
       const dk = addDays(S.start, i), d = dayTotal(dk), r = d / S.daily;
       const e = document.createElement('div'); e.className = 'd';
       if (d >= S.daily) e.classList.add('full'); else if (r >= .75) e.classList.add('l4'); else if (r >= .5) e.classList.add('l3'); else if (r >= .25) e.classList.add('l2'); else if (d > 0) e.classList.add('l1');
-      if (dk === k) e.classList.add('today'); if (dk > k) e.classList.add('future');
+      if (dk === k) e.classList.add('today'); if (dk > k) e.classList.add('future'); else { e.classList.add('past'); e.dataset.day = dk; }
       e.textContent = parse(dk).getDate(); e.title = `${dk}: ${d}`;
       heat.appendChild(e);
     }
@@ -536,6 +552,35 @@
   $('#btnCustom').addEventListener('click', () => { const v = $('#customN').value; if (v > 0) { addEntry(v, S.mode === 'once' ? 0 : null); $('#customN').value = ''; } });
   $('#customN').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnCustom').click(); });
   $('#todayLog').addEventListener('click', (e) => { const b = e.target.closest('button[data-del]'); if (!b) return; const k = today(); L[k].splice(Number(b.dataset.del), 1); if (!L[k].length) delete L[k]; markDirty(k); render(); toast('Entry removed'); });
+
+  // ---------- past-day logging ----------
+  const pastDate = $('#pastDate');
+  function renderPastInfo() {
+    const k = pastDate.value, box = $('#pastInfo');
+    pastDate.max = today();
+    if (!k) { box.innerHTML = ''; return; }
+    if (k > today()) { pastDate.value = today(); return renderPastInfo(); }
+    const d = dayTotal(k), entries = (L[k] || []).slice().reverse(), nice = parse(k).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    box.innerHTML = `<div class="row"><b>${nice}</b><span class="pill ${d >= S.daily ? 'ok' : d ? 'warn' : ''}">${fmt(d)} of ${fmt(S.daily)}</span></div>` +
+      (entries.length ? `<ul class="loglist" style="margin-top:6px">${entries.map((e, idx) => `<li><span>+${e.n}</span><span class="when">${new Date(e.t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} <button data-pdel="${entries.length - 1 - idx}">undo</button></span></li>`).join('')}</ul>` : '<p class="hint" style="margin:6px 0 0">Nothing logged for this day.</p>');
+  }
+  function openPastDay(k) { pastDate.value = k; $('#pastBox').open = true; renderPastInfo(); $('#pastN').focus(); }
+  pastDate.addEventListener('change', renderPastInfo);
+  $('#btnPast').addEventListener('click', () => {
+    const k = pastDate.value, v = $('#pastN').value;
+    if (!k) { toast('Pick a date first'); pastDate.focus(); return; }
+    if (k > today()) { toast("Can't log the future"); return; }
+    if (!(v > 0)) { $('#pastN').focus(); return; }
+    addEntry(v, null, k); $('#pastN').value = ''; renderPastInfo();
+  });
+  $('#pastN').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnPast').click(); });
+  $('#pastInfo').addEventListener('click', (e) => { const b = e.target.closest('button[data-pdel]'); if (!b) return; const k = pastDate.value; L[k].splice(Number(b.dataset.pdel), 1); if (!L[k].length) delete L[k]; markDirty(k); render(); renderPastInfo(); toast('Entry removed'); });
+  $('#heat').addEventListener('click', (e) => {
+    const c = e.target.closest('.d.past'); if (!c) return;
+    $$('nav button').forEach((x) => x.classList.toggle('on', x.dataset.view === 'today'));
+    $$('.view').forEach((v) => v.classList.toggle('on', v.id === 'view-today'));
+    openPastDay(c.dataset.day); $('#pastBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 
   const bindNum = (id, key, min, max) => $(id).addEventListener('change', (e) => { const v = Math.round(Number(e.target.value)); if (v >= min && v <= max) { S[key] = v; save(); render(); } else render(); });
   bindNum('#sDaily', 'daily', 1, 2000); bindNum('#sTotal', 'total', 1, 1000000);
