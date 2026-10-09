@@ -186,6 +186,12 @@
   details.past summary::before{content:"+";color:var(--red);font-size:18px;line-height:1}
   details.past[open] summary::before{content:"–"}
   details.past summary::-webkit-details-marker{display:none}
+  .modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.on{display:flex}
+  .modal .box{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-top:4px solid var(--red);border-radius:14px;padding:20px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+  .modal h3{font-family:var(--head);font-weight:400;font-size:24px;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px}
+  .modal p{font-size:16px;line-height:1.5;margin:0 0 16px;color:#d6d6d9}
+  .modal .btns{display:grid;gap:8px}
   .heat .d.past{cursor:pointer}
   .heat .d.past:active{outline:2px solid var(--red);outline-offset:-1px}
   .flagline{text-align:center;font-family:var(--head);letter-spacing:4px;font-size:14px;color:var(--muted);margin:18px 0 8px}
@@ -358,6 +364,8 @@
 
     <div class="panel">
       <h2>Data</h2>
+      <button class="ghost small" id="btnClaim" style="width:100%;margin-bottom:10px">Restore My History From The Board</button>
+      <p class="hint" style="margin:0 0 12px">New phone, reinstalled, or showing twice on the PAX board? This finds the profile with your F3 name and region, pulls its days onto this phone, and combines any duplicates.</p>
       <div class="row">
         <button class="ghost small" id="btnExport">Export JSON</button>
         <button class="ghost small" id="btnImport">Import JSON</button>
@@ -376,6 +384,7 @@
   <button data-view="settings"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
 <div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="box"><h3 id="modalTitle"></h3><p id="modalBody"></p><div class="btns"><button id="modalYes">Yes</button><button class="ghost" id="modalNo">No</button></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -585,8 +594,9 @@
   const bindNum = (id, key, min, max) => $(id).addEventListener('change', (e) => { const v = Math.round(Number(e.target.value)); if (v >= min && v <= max) { S[key] = v; save(); render(); } else render(); });
   bindNum('#sDaily', 'daily', 1, 2000); bindNum('#sTotal', 'total', 1, 1000000);
   $('#sDaily').addEventListener('change', fullResync);
-  $('#sName').addEventListener('change', (e) => { S.name = e.target.value.trim().slice(0, 30); save(); render(); fullResync(); });
-  $('#sRegion').addEventListener('change', (e) => { S.region = e.target.value.trim().slice(0, 40); save(); render(); fullResync(); });
+  const onIdentityChange = async () => { const claimed = await claimProfile(false); if (!claimed) fullResync(); };
+  $('#sName').addEventListener('change', (e) => { S.name = e.target.value.trim().slice(0, 30); save(); render(); onIdentityChange(); });
+  $('#sRegion').addEventListener('change', (e) => { S.region = e.target.value.trim().slice(0, 40); save(); render(); onIdentityChange(); });
   $('#sStart').addEventListener('change', (e) => { if (e.target.value) { S.start = e.target.value; if (S.end < S.start) S.end = S.start; save(); render(); } });
   $('#sEnd').addEventListener('change', (e) => { if (e.target.value && e.target.value >= S.start) { S.end = e.target.value; save(); render(); } else render(); });
   $('#btnPreset').addEventListener('click', () => { Object.assign(S, { daily: 109, total: 10000, start: '2026-10-01', end: '2026-12-31' }); save(); render(); toast('F3 defaults restored'); });
@@ -728,6 +738,53 @@
   $('#scopeSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { S.boardScope = b.dataset.scope; save(); renderBoard(); } });
   window.addEventListener('online', syncNow);
   if (sb) syncNow();
+
+  // ---------- claim an existing profile (new phone / reinstall / duplicates) ----------
+  function ask(title, body, yes, no) {
+    return new Promise((res) => {
+      const m = $('#modal'); $('#modalTitle').textContent = title; $('#modalBody').innerHTML = body; $('#modalYes').textContent = yes; $('#modalNo').textContent = no;
+      const done = (v) => { m.classList.remove('on'); $('#modalYes').onclick = $('#modalNo').onclick = null; res(v); };
+      $('#modalYes').onclick = () => done(true); $('#modalNo').onclick = () => done(false); m.classList.add('on');
+    });
+  }
+  const norm = (s) => String(s || '').trim().toLowerCase();
+  async function claimProfile(manual) {
+    if (!sb) { if (manual) toast('Board not connected'); return false; }
+    if (!S.name) { if (manual) toast('Set your F3 name first'); return false; }
+    let data = null;
+    try { ({ data } = await sb.from('f3_board').select('device_id,f3_name,region,total,days_logged').ilike('f3_name', S.name.trim().replace(/[%_\\]/g, '\\$&'))); } catch { data = null; }
+    if (!data) { if (manual) toast('Could not reach the board'); return false; }
+    const me = norm(S.name), rg = norm(myRegion());
+    let matches = data.filter((r) => norm(r.f3_name) === me && r.device_id !== S.deviceId);
+    if (!matches.length) { if (manual) toast(`No other profile found for ${S.name}`); return false; }
+    // prefer the same region, then the biggest total
+    matches.sort((a, b) => (norm(b.region) === rg) - (norm(a.region) === rg) || b.total - a.total);
+    const best = matches[0], sameRegion = matches.filter((r) => norm(r.region) === norm(best.region));
+    const extra = sameRegion.length - 1;
+    const ok = await ask('Is this you?',
+      `A profile for <b>${esc(best.f3_name)}</b> in <b>${esc(best.region)}</b> already has <b>${fmt(best.total)}</b> pushups over ${best.days_logged} day${best.days_logged === 1 ? '' : 's'}${extra ? ` (plus ${extra} duplicate${extra > 1 ? 's' : ''})` : ''}.<br><br>Claiming it restores that history to this phone and combines everything into one line on the PAX board.`,
+      "Yes, that's me", "No, I'm someone else");
+    if (!ok) return false;
+    // keep the spelling the board already knows
+    S.name = best.f3_name; if (best.region && norm(best.region) !== 'f3 nation') S.region = best.region;
+    save(); renderSettings();
+    return mergeInto(best.device_id, [S.deviceId, ...sameRegion.slice(1).map((m) => m.device_id)]);
+  }
+  async function mergeInto(target, others) {
+    const { data: rows, error } = await sb.from('f3_pushups').select('device_id,day,count').in('device_id', [target, ...others]);
+    if (error) { toast('Could not load history'); return false; }
+    // bring every day onto this phone; where a day exists in more than one place keep the larger count
+    const remote = {}; rows.forEach((r) => { remote[r.day] = Math.max(remote[r.day] || 0, r.count); });
+    let restored = 0;
+    Object.entries(remote).forEach(([k, c]) => { const have = dayTotal(k); if (c > have) { (L[k] ||= []).push({ t: parse(k).getTime() + 12 * 3600e3, n: c - have, set: null, restored: true }); restored += c - have; } });
+    S.deviceId = target; Object.keys(L).forEach((k) => { D[k] = true; }); save();
+    const retire = others.filter((d) => d !== target);
+    if (retire.length) { const { error: e2 } = await sb.from('f3_pushups').update({ count: 0 }).in('device_id', retire); if (e2) console.warn('retire failed', e2); }
+    boardCache = null; await syncNow(); render();
+    toast(restored ? `Restored ${fmt(restored)} pushups` : 'Profile claimed');
+    return true;
+  }
+  $('#btnClaim').addEventListener('click', () => claimProfile(true));
 
   // ---------- install ----------
   let deferredInstall = null;
