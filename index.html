@@ -136,6 +136,7 @@
   .heat .d{aspect-ratio:1;border-radius:4px;background:#1c1c20;border:1px solid #26262a;display:grid;place-items:center;font-size:9px;color:var(--dim);position:relative}
   .heat .d.l1{background:#3a1416}.heat .d.l2{background:#6e1a1f}.heat .d.l3{background:#a81b23}.heat .d.l4{background:var(--red);color:#fff}
   .heat .d.full{background:var(--ok);color:#fff;border-color:#2f5d33}
+  .heat .d.miss{background:repeating-linear-gradient(135deg,#1c1c20 0 4px,#3a1416 4px 6px);border:1px dashed var(--red);color:#f06a70;font-weight:700}
   .heat .d.today{outline:2px solid #fff;outline-offset:-1px;color:#fff}
   .heat .d.future{opacity:.35}
   .heat .dow{aspect-ratio:auto;background:none;border:0;font-size:10px;letter-spacing:1px;color:var(--muted)}
@@ -274,8 +275,9 @@
     </div>
     <div class="panel">
       <h2>Calendar</h2>
+      <p class="hint" id="missHint" style="margin:0 0 8px"></p>
       <div class="heat" id="heat"></div>
-      <div class="legend">Less <i style="background:#1c1c20"></i><i style="background:#3a1416"></i><i style="background:#6e1a1f"></i><i style="background:#a81b23"></i><i style="background:var(--red)"></i> Goal <i style="background:var(--ok)"></i></div>
+      <div class="legend"><i style="background:repeating-linear-gradient(135deg,#1c1c20 0 3px,#3a1416 3px 5px);border:1px dashed var(--red)"></i> Missed &nbsp; Less <i style="background:#3a1416"></i><i style="background:#6e1a1f"></i><i style="background:#a81b23"></i><i style="background:var(--red)"></i> Goal <i style="background:var(--ok)"></i></div>
     </div>
     <div class="panel">
       <h2>Records</h2>
@@ -518,14 +520,19 @@
     ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((d) => { const e = document.createElement('div'); e.className = 'd dow'; e.textContent = d; heat.appendChild(e); });
     const firstDow = parse(S.start).getDay();
     for (let i = 0; i < firstDow; i++) { const e = document.createElement('div'); e.className = 'd'; e.style.visibility = 'hidden'; heat.appendChild(e); }
+    let missed = 0;
     for (let i = 0; i < len; i++) {
       const dk = addDays(S.start, i), d = dayTotal(dk), r = d / S.daily;
       const e = document.createElement('div'); e.className = 'd';
       if (d >= S.daily) e.classList.add('full'); else if (r >= .75) e.classList.add('l4'); else if (r >= .5) e.classList.add('l3'); else if (r >= .25) e.classList.add('l2'); else if (d > 0) e.classList.add('l1');
+      else if (dk < k) { e.classList.add('miss'); missed++; }
       if (dk === k) e.classList.add('today'); if (dk > k) e.classList.add('future'); else { e.classList.add('past'); e.dataset.day = dk; }
       e.textContent = parse(dk).getDate(); e.title = `${dk}: ${d}`;
       heat.appendChild(e);
     }
+    $('#missHint').innerHTML = k < S.start ? 'Tap any day once the challenge starts to log it.'
+      : missed ? `<span style="color:#f06a70;font-weight:700">${missed} missed day${missed === 1 ? '' : 's'}</span> — tap a day to log pushups you did but didn't record.`
+      : 'No missed days. Tap any past day to add to it.';
   }
 
   function renderSettings() {

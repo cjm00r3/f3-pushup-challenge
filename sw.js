@@ -1,5 +1,5 @@
 /* F3 Pushup Challenge service worker: network-first with offline cache fallback + notification click handling */
-const CACHE = 'f3-pushups-v6';
+const CACHE = 'f3-pushups-v7';
 const ASSETS = ['./', './index.html', './config.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (e) => {
