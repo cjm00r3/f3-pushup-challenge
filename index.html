@@ -138,6 +138,11 @@
   .heat .d.full{background:var(--ok);color:#fff;border-color:#2f5d33}
   .heat .d.miss{background:repeating-linear-gradient(135deg,#1c1c20 0 4px,#3a1416 4px 6px);border:1px dashed var(--red);color:#f06a70;font-weight:700}
   .heat .d.today{outline:2px solid #fff;outline-offset:-1px;color:#fff}
+  .heat .d.sel{outline:3px solid #ffd54a;outline-offset:-2px;color:#fff;font-weight:700}
+  .heat .d.off{visibility:hidden}
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px}
+  .calhead .mon{font-family:var(--head);font-size:18px;letter-spacing:2px;text-transform:uppercase}
+  .calhead button{padding:4px 14px;font-size:18px;line-height:1}
   .heat .d.future{opacity:.35}
   .heat .dow{aspect-ratio:auto;background:none;border:0;font-size:10px;letter-spacing:1px;color:var(--muted)}
   .legend{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:var(--muted)}
@@ -249,8 +254,11 @@
       <div id="todayLog" style="margin-top:12px"></div>
       <details class="past" id="pastBox">
         <summary>Missed a day? Log a past day</summary>
+        <p class="hint" style="margin:8px 0 6px">Tap a day. <span style="color:#f06a70;font-weight:700">Hatched red</span> days have nothing logged.</p>
+        <div class="calhead"><button class="ghost small" id="pastPrev">‹</button><div class="mon" id="pastMonLabel"></div><button class="ghost small" id="pastNext">›</button></div>
+        <div class="heat" id="pastCal"></div>
+        <input type="hidden" id="pastDate">
         <div class="customrow" style="margin-top:10px">
-          <input type="date" id="pastDate" style="flex:1.3">
           <input type="number" id="pastN" inputmode="numeric" min="1" max="2000" placeholder="Count">
           <button id="btnPast">Add</button>
         </div>
@@ -580,17 +588,37 @@
     box.innerHTML = `<div class="row"><b>${nice}</b><span class="pill ${d >= S.daily ? 'ok' : d ? 'warn' : ''}">${fmt(d)} of ${fmt(S.daily)}</span></div>` +
       (entries.length ? `<ul class="loglist" style="margin-top:6px">${entries.map((e, idx) => `<li><span>+${e.n}</span><span class="when">${new Date(e.t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} <button data-pdel="${entries.length - 1 - idx}">undo</button></span></li>`).join('')}</ul>` : '<p class="hint" style="margin:6px 0 0">Nothing logged for this day.</p>');
   }
-  function openPastDay(k) { pastDate.value = k; $('#pastBox').open = true; renderPastInfo(); $('#pastN').focus(); }
-  pastDate.addEventListener('change', renderPastInfo);
+  let pastMonth = today().slice(0, 7);
+  function renderPastCal() {
+    const k = today(), [y, m] = pastMonth.split('-').map(Number), sel = pastDate.value;
+    const dim = new Date(y, m, 0).getDate(), firstDow = new Date(y, m - 1, 1).getDay(), cal = $('#pastCal');
+    $('#pastMonLabel').textContent = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    $('#pastPrev').disabled = pastMonth <= S.start.slice(0, 7); $('#pastNext').disabled = pastMonth >= k.slice(0, 7);
+    let html = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<div class="d dow">${d}</div>`).join('');
+    for (let i = 0; i < firstDow; i++) html += '<div class="d off"></div>';
+    for (let d = 1; d <= dim; d++) {
+      const dk = keyOf(new Date(y, m - 1, d)), t = dayTotal(dk), r = t / S.daily, cls = ['d'];
+      if (t >= S.daily) cls.push('full'); else if (r >= .75) cls.push('l4'); else if (r >= .5) cls.push('l3'); else if (r >= .25) cls.push('l2'); else if (t > 0) cls.push('l1'); else if (dk < k && dk >= S.start) cls.push('miss');
+      if (dk === k) cls.push('today'); if (dk > k) cls.push('future'); else cls.push('past'); if (dk === sel) cls.push('sel');
+      html += `<div class="${cls.join(' ')}" ${dk <= k ? `data-day="${dk}"` : ''} title="${dk}: ${t}">${d}</div>`;
+    }
+    cal.innerHTML = html;
+  }
+  function openPastDay(k) { pastDate.value = k; pastMonth = k.slice(0, 7); $('#pastBox').open = true; renderPastCal(); renderPastInfo(); $('#pastN').focus(); }
+  $('#pastCal').addEventListener('click', (e) => { const c = e.target.closest('.d[data-day]'); if (c) { pastDate.value = c.dataset.day; renderPastCal(); renderPastInfo(); } });
+  $('#pastPrev').addEventListener('click', () => { const [y, m] = pastMonth.split('-').map(Number); pastMonth = keyOf(new Date(y, m - 2, 1)).slice(0, 7); renderPastCal(); });
+  $('#pastNext').addEventListener('click', () => { const [y, m] = pastMonth.split('-').map(Number); pastMonth = keyOf(new Date(y, m, 1)).slice(0, 7); renderPastCal(); });
+  pastDate.addEventListener('change', () => { renderPastCal(); renderPastInfo(); });
+  renderPastCal();
   $('#btnPast').addEventListener('click', () => {
     const k = pastDate.value, v = $('#pastN').value;
     if (!k) { toast('Pick a date first'); pastDate.focus(); return; }
     if (k > today()) { toast("Can't log the future"); return; }
     if (!(v > 0)) { $('#pastN').focus(); return; }
-    addEntry(v, null, k); $('#pastN').value = ''; renderPastInfo();
+    addEntry(v, null, k); $('#pastN').value = ''; renderPastCal(); renderPastInfo();
   });
   $('#pastN').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnPast').click(); });
-  $('#pastInfo').addEventListener('click', (e) => { const b = e.target.closest('button[data-pdel]'); if (!b) return; const k = pastDate.value; L[k].splice(Number(b.dataset.pdel), 1); if (!L[k].length) delete L[k]; markDirty(k); render(); renderPastInfo(); toast('Entry removed'); });
+  $('#pastInfo').addEventListener('click', (e) => { const b = e.target.closest('button[data-pdel]'); if (!b) return; const k = pastDate.value; L[k].splice(Number(b.dataset.pdel), 1); if (!L[k].length) delete L[k]; markDirty(k); render(); renderPastCal(); renderPastInfo(); toast('Entry removed'); });
   $('#heat').addEventListener('click', (e) => {
     const c = e.target.closest('.d.past'); if (!c) return;
     $$('nav button').forEach((x) => x.classList.toggle('on', x.dataset.view === 'today'));
